@@ -18,16 +18,15 @@ let Token =
 
 let Item
     : Type
-    = ∀ (Item : Type) →
-      ∀ (MkItem :
-        { source : Text → Item
+    = ∀ (MkItem :
+        { source : Text → List Token
         , generated :
           { results : List Text
           , command : Command
-          , prereqs : List Item
-          } → Item
+          , prereqs : List (List Token)
+          } → List Token
         }
-      ) → Item
+      ) → List Token
 
 let Args =
   { results : List Text
@@ -36,16 +35,18 @@ let Args =
   } : Type
 
 let generated
-  : Args → Item
+  : { results : List Text
+    , command : Command
+    , prereqs : List Item
+    } → Item
   = λ(args : Args) →
-    λ(Item : Type) →
     λ(MkItem :
-      { source : Text → Item
+      { source : Text → List Token
       , generated :
         { results : List Text
         , command : Command
-        , prereqs : List Item
-        } → Item
+        , prereqs : List (List Token)
+        } → List Token
       }
     ) →
     MkItem.generated
@@ -53,23 +54,22 @@ let generated
       , command = args.command
       , prereqs =
         List/map
-          Item@1
           Item
-          (λ(x : Item@1) → x Item MkItem)
+          (List Token)
+          (λ(x : Item) → x MkItem)
           args.prereqs
       }
 
 let source
   : Text → Item
   = λ(file : Text) →
-    λ(Item : Type) →
     λ(MkItem :
-      { source : Text → Item
+      { source : Text → List Token
       , generated :
         { results : List Text
         , command : Command
-        , prereqs : List Item
-        } → Item
+        , prereqs : List (List Token)
+        } → List Token
       }
     ) →
     MkItem.source file
@@ -79,7 +79,6 @@ let build
     : Item → List Token
     = λ(x : Item) →
       x
-        (List Token)
         { source = λ(file : Text) → [ Token.TSource file ]
         , generated = λ(p :
           { results : List Text
